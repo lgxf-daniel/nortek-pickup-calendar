@@ -197,7 +197,7 @@ function renderDetail() {
   }
   host.innerHTML = shown.map(function (l) {
     var apptClass = l.unconfirmed ? "appt unconfirmed" : "appt confirmed";
-    var label = (l.appt_label || l.appt_status || "Appointment") + (l.delivery_appt ? " " + l.delivery_appt : " —");
+    var label = (l.delivery_appt || "No appointment time") + " · " + (l.appt_status || "Scheduled");
     var from = l.previous_pickup ? fmtLong(l.previous_pickup) : "an earlier date";
     return "<div class='load" + (l.trailer_assigned ? "" : " tender") + (l.rescheduled ? " rescheduled" : "") + "'>"
       + "<div class='top'><span class='bol'>" + esc(l.bol || "No BOL") + "</span><span class='tag" + (l.rescheduled ? " moved" : (l.trailer_assigned ? "" : " warn")) + "'>" + esc(l.rescheduled ? "Rescheduled" : (l.trailer_assigned ? l.trailer : "Trailer not assigned")) + "</span></div>"
@@ -205,7 +205,7 @@ function renderDetail() {
       + (l.rescheduled && !l.trailer_assigned ? "<div class='dest'>Trailer not assigned</div>" : "")
       + (l.rescheduled ? "<div class='dest'>Moved from " + esc(from) + "</div>" : "")
       + "<div class='dest'>" + esc(l.destination || "Destination not listed") + "</div>"
-      + "<div class='" + apptClass + "'>" + esc(label) + " · " + esc(l.appt_status) + "</div>"
+      + "<div class='" + apptClass + "'>" + esc(label) + "</div>"
       + "</div>";
   }).join("");
 }
