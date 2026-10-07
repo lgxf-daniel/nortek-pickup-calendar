@@ -45,7 +45,10 @@
   .load.tender { border-left-color:#c47b12; }
   .load .top { display:flex; justify-content:space-between; gap:8px; font-size:13px; }
   .bol { font-weight:700; }
-  .bol.done { text-decoration:line-through; color:#8a97a6; }
+    .load.covered { background:#f4f6f8; border-left-color:#c5ced6; }
+  .load.covered .bol, .load.covered .dest, .load.covered .appt, .load.covered .tag { color:#8a97a6; }
+  .load.covered .tag { background:#eef1f4; }
+
   .tag { font-size:11px; border-radius:99px; padding:2px 8px; background:var(--teal-bg); color:var(--teal); white-space:nowrap; }
   .tag.warn { background:var(--amber-bg); color:#8a5a00; }
   .dest { margin-top:4px; font-size:14px; }
@@ -80,7 +83,7 @@
 </div>
 <header>
   <h1>Pickup calendar</h1>
-  <p>Each day shows how many loads are already set for pickup. Weekend pickups stay on Saturday and Sunday. Trailer number comes from Nortek Trailers-Poplar Bluff when assigned. Tenders column K in red is a delivery appointment that is not confirmed; black is confirmed. Nortek column J is the scheduled delivery appointment. Purple means the pickup date moved since an earlier refresh. On the pickup day, a BOL is crossed off when column L is blank or is not rc not sent.</p>
+  <p>Each day shows how many loads are already set for pickup. Weekend pickups stay on Saturday and Sunday. Trailer number comes from Nortek Trailers-Poplar Bluff when assigned. Tenders column K in red is a delivery appointment that is not confirmed; black is confirmed. Nortek column J is the scheduled delivery appointment. Purple means the pickup date moved since an earlier refresh. On the pickup day, a covered load is muted and listed at the bottom when column L is blank or is not rc not sent.</p>
 </header>
 <div class="wrap">
   <p class="stamp" id="stamp"></p>
@@ -204,13 +207,19 @@ function renderDetail() {
   });
   document.getElementById("detailTitle").textContent = fmtLong(selected);
   document.getElementById("detailMeta").textContent = rows.length + (rows.length === 1 ? " load" : " loads") + " set for pickup";
+  rows.sort(function (a, b) {
+    var ac = a.pickup === TODAY && a.driver_assigned ? 1 : 0;
+    var bc = b.pickup === TODAY && b.driver_assigned ? 1 : 0;
+    return ac - bc;
+  });
   document.getElementById("detail").innerHTML = rows.map(function (l) {
     var apptClass = "appt" + (l.unconfirmed ? " unconfirmed" : " confirmed");
     var from = l.previous_pickup ? fmtLong(l.previous_pickup) : "";
     var tag = l.rescheduled ? "Rescheduled" : (l.trailer_assigned ? l.trailer : "Trailer not assigned");
     var trailerLine = l.trailer_assigned ? ("Trailer " + l.trailer) : "Trailer not assigned";
-    return "<div class='load" + (l.trailer_assigned ? "" : " tender") + (l.rescheduled ? " rescheduled" : "") + "'>"
-      + "<div class='top'><span class='bol" + (l.pickup===TODAY && l.driver_assigned ? " done" : "") + "'>" + esc(l.bol || "No BOL") + "</span><span class='tag" + (l.rescheduled ? " moved" : (l.trailer_assigned ? "" : " warn")) + "'>" + esc(tag) + "</span></div>"
+    var covered = l.pickup === TODAY && l.driver_assigned;
+    return "<div class='load" + (l.trailer_assigned ? "" : " tender") + (l.rescheduled ? " rescheduled" : "") + (covered ? " covered" : "") + "'>"
+      + "<div class='top'><span class='bol'>" + esc(l.bol || "No BOL") + "</span><span class='tag" + (l.rescheduled ? " moved" : (l.trailer_assigned ? "" : " warn")) + "'>" + esc(tag) + "</span></div>"
       + "<div class='dest'>" + esc(trailerLine) + "</div>"
       + (l.rescheduled && from ? "<div class='dest'>Moved from " + esc(from) + "</div>" : "")
       + "<div class='dest'>" + esc(l.destination || "Destination not listed") + "</div>"
