@@ -132,7 +132,7 @@ function apptText(l) {
   var st = l.appt_status || (l.unconfirmed ? "Not confirmed" : "Confirmed");
   return t + " · " + st;
 }
-function esc(s) { return String(s||"").replace(/[&<>"']/g, function(c){ return {"&":"&","<":"<",">":">","\"":""","'":"&#39;"}[c]; }); }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&" + "amp;").replace(/</g, "&" + "lt;").replace(/>/g, "&" + "gt;").replace(/"/g, "&" + "quot;"); }
 function byDate(date) { return DATA.loads.filter(function(l){ return l.pickup === date; }); }
 function renderStrip() {
   var dates = {};
@@ -236,12 +236,8 @@ document.getElementById("gatePw").addEventListener("keydown", function(e){
 });
 document.getElementById("gateForm").onsubmit = function(e){
   e.preventDefault();
-  var entered = document.getElementById("gatePw").value;
   document.getElementById("gate").style.display = "none";
   try { sessionStorage.setItem("pb_ok", "1"); } catch (err) {}
-  return;
-  if (false && (entered === " " || entered.trim() === "")) {
-  document.getElementById("gateErr").textContent = "Password does not match.";
 };
 if (sessionStorage.getItem("pb_ok") === "1") {
   document.getElementById("gate").style.display = "none";
