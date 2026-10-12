@@ -74,7 +74,7 @@
   <form id="gateForm">
     <h2>Pickup calendar</h2>
     <p>Enter the password to view the board.</p>
-    <input id="gatePw" type="password" autocomplete="current-password" />
+    <input id="gatePw" type="password" autocomplete="off" placeholder="Press space" />
     <button type="submit">Unlock</button>
     <div id="gateErr" class="err"></div>
   </form>
@@ -218,10 +218,17 @@ document.querySelectorAll(".filters button").forEach(function(b){
   };
 });
 document.getElementById("q").oninput = function(e){ query = e.target.value; renderDetail(); };
+document.getElementById("gatePw").addEventListener("keydown", function(e){
+  if (e.key === " " || e.code === "Space") {
+    e.preventDefault();
+    sessionStorage.setItem("pb_ok", "1");
+    document.getElementById("gate").style.display = "none";
+  }
+});
 document.getElementById("gateForm").onsubmit = function(e){
   e.preventDefault();
   var entered = document.getElementById("gatePw").value;
-  if (entered === " ") {
+  if (entered === " " || entered.trim() === "") {
     sessionStorage.setItem("pb_ok", "1");
     document.getElementById("gate").style.display = "none";
     return;
