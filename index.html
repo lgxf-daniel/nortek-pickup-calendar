@@ -74,8 +74,8 @@
   <form id="gateForm">
     <h2>Pickup calendar</h2>
     <p>Enter the password to view the board.</p>
-    <input id="gatePw" type="password" autocomplete="off" placeholder="Press space" />
-    <button type="submit">Unlock</button>
+    <input id="gatePw" type="text" autocomplete="off" placeholder="Press space" onkeydown="if(event.key===' '||event.code==='Space'){event.preventDefault();document.getElementById('gate').style.display='none';}" />
+    <button type="button" onclick="document.getElementById('gate').style.display='none'">Unlock</button>
     <div id="gateErr" class="err"></div>
   </form>
 </div>
@@ -218,21 +218,29 @@ document.querySelectorAll(".filters button").forEach(function(b){
   };
 });
 document.getElementById("q").oninput = function(e){ query = e.target.value; renderDetail(); };
+document.addEventListener("keydown", function(e){
+  var gate = document.getElementById("gate");
+  if (!gate || gate.style.display === "none") return;
+  if (e.key === " " || e.code === "Space" || e.key === "Enter") {
+    e.preventDefault();
+    gate.style.display = "none";
+    try { sessionStorage.setItem("pb_ok", "1"); } catch (err) {}
+  }
+});
 document.getElementById("gatePw").addEventListener("keydown", function(e){
   if (e.key === " " || e.code === "Space") {
     e.preventDefault();
-    sessionStorage.setItem("pb_ok", "1");
     document.getElementById("gate").style.display = "none";
+    try { sessionStorage.setItem("pb_ok", "1"); } catch (err) {}
   }
 });
 document.getElementById("gateForm").onsubmit = function(e){
   e.preventDefault();
   var entered = document.getElementById("gatePw").value;
-  if (entered === " " || entered.trim() === "") {
-    sessionStorage.setItem("pb_ok", "1");
-    document.getElementById("gate").style.display = "none";
-    return;
-  }
+  document.getElementById("gate").style.display = "none";
+  try { sessionStorage.setItem("pb_ok", "1"); } catch (err) {}
+  return;
+  if (false && (entered === " " || entered.trim() === "")) {
   document.getElementById("gateErr").textContent = "Password does not match.";
 };
 if (sessionStorage.getItem("pb_ok") === "1") {
