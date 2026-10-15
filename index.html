@@ -1,1 +1,205 @@
-PLACEHOLDER_WILL_REPLACE
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="refresh" content="300" />
+<title>Pickup calendar</title>
+<style>
+  :root { --ink:#1c2834; --muted:#5d6b7a; --line:#d7dee7; --bg:#f3f6f8; --card:#fff; --navy:#1f4e79; --amber:#c47b12; --amber-bg:#fff6e8; --teal:#1f7a6d; --teal-bg:#e7f5f2; --today:#e5f0fa; --purple:#7b3fa1; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:var(--navy); color:#fff; padding:18px 24px 16px; }
+  header h1 { margin:0 0 4px; font-size:22px; }
+  header p { margin:0; color:#d5e2ef; font-size:13px; max-width:980px; }
+  .wrap { padding:16px 20px 32px; max-width:1240px; margin:0 auto; }
+  .stamp { font-size:12px; color:var(--muted); margin:0 0 8px; }
+  .strip-label { font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:4px 0 8px; }
+  .strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; }
+  .chip { min-width:92px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; text-align:left; font:inherit; color:inherit; }
+  .chip strong { display:block; font-size:22px; line-height:1; color:var(--navy); }
+  .chip span { display:block; font-size:12px; color:var(--muted); margin-top:4px; }
+  .chip.today { background:var(--today); border-color:#8eb4d8; }
+  .chip.on { outline:2px solid var(--navy); }
+  .chip.moved { outline:2px solid var(--purple); }
+  .layout { display:grid; grid-template-columns:460px 1fr; gap:16px; margin-top:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .cal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .cal-head h2 { margin:0; font-size:18px; }
+  button.nav { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:14px; }
+  .dow, .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .dow div { text-align:center; font-size:11px; color:var(--muted); font-weight:700; padding-bottom:4px; }
+  .day { min-height:74px; border:1px solid var(--line); border-radius:10px; padding:6px; cursor:pointer; background:#fff; text-align:left; font:inherit; color:inherit; }
+  .day .n { font-size:12px; color:var(--muted); }
+  .day .count { font-size:22px; font-weight:700; color:var(--navy); line-height:1.1; }
+  .day .sub { font-size:10px; color:var(--muted); }
+  .day.out { opacity:.45; }
+  .day.today { background:var(--today); border-color:#8eb4d8; }
+  .day.on { outline:2px solid var(--navy); }
+  .day.zero .count { color:#b7c0ca; font-weight:600; }
+  .day.moved { outline:2px solid var(--purple); }
+  .day.moved .count { color:var(--purple); }
+  .detail h2 { margin:0 0 4px; font-size:18px; }
+  .meta { color:var(--muted); font-size:13px; margin-bottom:10px; }
+  .load { border:1px solid var(--line); border-left:4px solid var(--teal); border-radius:8px; padding:8px 10px; margin-bottom:8px; }
+  .load.tender { border-left-color:#c47b12; }
+  .load .top { display:flex; justify-content:space-between; gap:8px; font-size:13px; }
+  .bol { font-weight:700; }
+  .load.covered { background:#f4f6f8; border-left-color:#c5ced6; }
+  .load.covered .bol, .load.covered .dest, .load.covered .appt, .load.covered .tag { color:#8a97a6; }
+  .load.covered .tag { background:#eef1f4; }
+  .tag { font-size:11px; border-radius:99px; padding:2px 8px; background:var(--teal-bg); color:var(--teal); white-space:nowrap; }
+  .tag.warn { background:var(--amber-bg); color:#8a5a00; }
+  .tag.moved { background:#f3e8f7; color:var(--purple); }
+  .dest { margin-top:4px; font-size:14px; }
+  .appt { margin-top:3px; font-size:13px; color:#1c2834; }
+  .appt.unconfirmed { color:#c62828; font-weight:700; }
+  .appt.confirmed { color:#1c2834; font-weight:700; }
+  .filters { display:flex; gap:8px; margin:8px 0 12px; flex-wrap:wrap; }
+  .filters button, .search { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; }
+  .filters button.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .search { min-width:220px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pickup calendar</h1>
+  <p>Each day shows how many loads are already set for pickup. Weekend pickups stay on Saturday and Sunday. Trailer number comes from Nortek Trailers-Poplar Bluff when assigned. Tenders column K in red is a delivery appointment that is not confirmed; black is confirmed. On the pickup day, a load with a driver assigned is muted and moved to the bottom. Rescheduled loads stay purple.</p>
+</header>
+<div class="wrap">
+  <p class="stamp" id="stamp"></p>
+  <div class="strip-label">Loads by pickup date</div>
+  <div class="strip" id="strip"></div>
+  <div class="layout">
+    <div class="card">
+      <div class="cal-head">
+        <button class="nav" id="prev">&larr;</button>
+        <h2 id="monthLabel"></h2>
+        <button class="nav" id="next">&rarr;</button>
+      </div>
+      <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="card detail">
+      <h2 id="detailTitle"></h2>
+      <div class="meta" id="detailMeta"></div>
+      <div class="filters">
+        <button class="on" data-f="all">All</button>
+        <button data-f="nortek">Nortek</button>
+        <button data-f="tender">Tenders</button>
+        <button data-f="moved">Rescheduled</button>
+        <input class="search" id="q" placeholder="Search BOL, trailer, destination" />
+      </div>
+      <div id="detail"></div>
+    </div>
+  </div>
+</div>
+<script id="payload" type="application/json">PAYLOAD_PLACEHOLDER</script>
+<script>
+var DATA = JSON.parse(document.getElementById("payload").textContent);
+var selected = DATA.today;
+var cursor = new Date(DATA.today + "T12:00:00");
+var filter = "all";
+var query = "";
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+function fmtLong(iso) {
+  var p = iso.split("-");
+  var d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  return d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+}
+function apptText(l) {
+  var t = l.delivery_appt || "";
+  var s = l.appt_status || "";
+  if (!t && !s) return "";
+  if (!t) return s;
+  if (!s) return t;
+  return t + " · " + s;
+}
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&" + "amp;").replace(/</g, "&" + "lt;").replace(/>/g, "&" + "gt;").replace(/"/g, "&" + "quot;"); }
+function byDate(date) { return DATA.loads.filter(function(l){ return l.pickup === date; }); }
+function renderStrip() {
+  var dates = {};
+  DATA.loads.forEach(function(l){ dates[l.pickup] = (dates[l.pickup]||0)+1; });
+  var keys = Object.keys(dates).sort();
+  var html = keys.map(function(d){
+    var hasMoved = DATA.loads.some(function(l){ return l.pickup===d && l.rescheduled; });
+    var cls = "chip" + (d===DATA.today?" today":"") + (d===selected?" on":"") + (hasMoved?" moved":"");
+    return "<button class='" + cls + "' data-d='" + d + "'><strong>" + dates[d] + "</strong><span>" + fmtLong(d) + "</span></button>";
+  }).join("");
+  document.getElementById("strip").innerHTML = html;
+  document.querySelectorAll("#strip .chip").forEach(function(b){
+    b.onclick = function(){ selected = b.dataset.d; render(); };
+  });
+}
+function renderCal() {
+  var y = cursor.getFullYear(), m = cursor.getMonth();
+  document.getElementById("monthLabel").textContent = cursor.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+  var first = new Date(y, m, 1);
+  var start = new Date(first); start.setDate(1 - first.getDay());
+  var html = "";
+  for (var i=0; i<42; i++) {
+    var d = new Date(start); d.setDate(start.getDate()+i);
+    var ds = iso(d);
+    var cnt = byDate(ds).length;
+    var hasMoved = DATA.loads.some(function(l){ return l.pickup===ds && l.rescheduled; });
+    var cls = "day" + (d.getMonth()!==m?" out":"") + (ds===DATA.today?" today":"") + (ds===selected?" on":"") + (cnt===0?" zero":"") + (hasMoved?" moved":"");
+    html += "<button class='" + cls + "' data-d='" + ds + "'><div class='n'>" + d.getDate() + "</div><div class='count'>" + cnt + "</div><div class='sub'>" + (cnt===1?"load":"loads") + "</div></button>";
+  }
+  document.getElementById("grid").innerHTML = html;
+  document.querySelectorAll("#grid .day").forEach(function(b){
+    b.onclick = function(){ selected = b.dataset.d; render(); };
+  });
+}
+function renderDetail() {
+  var rows = byDate(selected).slice();
+  if (filter === "nortek") rows = rows.filter(function(l){ return l.source==="nortek"; });
+  if (filter === "tender") rows = rows.filter(function(l){ return l.source==="tender"; });
+  if (filter === "moved") rows = rows.filter(function(l){ return l.rescheduled; });
+  if (query) {
+    var q = query.toLowerCase();
+    rows = rows.filter(function(l){
+      return (l.bol||"").toLowerCase().indexOf(q)>=0 || (l.trailer||"").toLowerCase().indexOf(q)>=0 || (l.destination||"").toLowerCase().indexOf(q)>=0;
+    });
+  }
+  var isToday = selected === DATA.today;
+  rows.sort(function(a,b){
+    var aMute = isToday && a.driver_assigned ? 1 : 0;
+    var bMute = isToday && b.driver_assigned ? 1 : 0;
+    if (aMute !== bMute) return aMute - bMute;
+    return (a.bol||"").localeCompare(b.bol||"");
+  });
+  document.getElementById("detailTitle").textContent = fmtLong(selected);
+  document.getElementById("detailMeta").textContent = rows.length + " load" + (rows.length===1?"":"s") + " set for pickup";
+  var html = rows.map(function(l){
+    var covered = isToday && l.driver_assigned;
+    var cls = "load" + (l.source==="tender"?" tender":"") + (covered?" covered":"");
+    var tag = l.source==="nortek" ? "Scheduled" : (l.confirmed ? "Confirmed" : "Not confirmed");
+    var prev = l.rescheduled && l.previous_pickup ? " <span class='tag moved'>was " + esc(fmtLong(l.previous_pickup)) + "</span>" : "";
+    var trailer = l.trailer ? "Trailer " + esc(l.trailer) : "No trailer assigned";
+    var apptCls = "appt" + (l.confirmed===false ? " unconfirmed" : " confirmed");
+    return "<div class='" + cls + "'><div class='top'><span class='bol'>" + esc(l.bol) + prev + "</span><span class='tag" + (l.rescheduled?" moved":"") + "'>" + tag + "</span></div><div class='dest'>" + esc(l.destination) + "</div><div class='" + apptCls + "'>" + esc(apptText(l)) + "</div><div style='font-size:12px;color:#5d6b7a;margin-top:3px'>" + trailer + (covered ? " · driver assigned" : "") + "</div></div>";
+  }).join("");
+  document.getElementById("detail").innerHTML = html || "<div class='meta'>No loads on this day.</div>";
+}
+function render() {
+  document.getElementById("stamp").textContent = "Updated " + DATA.generated + " · " + DATA.loads.length + " loads";
+  renderStrip();
+  renderCal();
+  renderDetail();
+}
+document.getElementById("prev").onclick = function(){ cursor = new Date(cursor.getFullYear(), cursor.getMonth()-1, 1); render(); };
+document.getElementById("next").onclick = function(){ cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1); render(); };
+document.querySelectorAll(".filters button").forEach(function(b){
+  b.onclick = function(){
+    document.querySelectorAll(".filters button").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    filter = b.dataset.f;
+    renderDetail();
+  };
+});
+document.getElementById("q").oninput = function(){ query = this.value; renderDetail(); };
+render();
+</script>
+</body>
+</html>
