@@ -73,7 +73,7 @@
 <body>
 <header>
   <h1>Pickup calendar</h1>
-  <p>Each day shows how many loads are already set for pickup. Weekend pickups stay on Saturday and Sunday. Trailer number comes from Nortek Trailers-Poplar Bluff when assigned. Tenders column K in red is a delivery appointment that is not confirmed; black is confirmed. On the pickup day, a load with a driver assigned is muted and moved to the bottom. Rescheduled loads stay purple.</p>
+  <p>Each day shows how many loads are already set for pickup. Weekend pickups stay on Saturday and Sunday. Trailer number comes from Nortek Trailers-Poplar Bluff when assigned. Tenders column K in red is a delivery appointment that is not confirmed; black is confirmed. On today and tomorrow, a load with a driver assigned is muted and moved to the bottom. Rescheduled loads stay purple.</p>
 </header>
 <div class="wrap">
   <p class="stamp" id="stamp"></p>
@@ -171,16 +171,20 @@ function renderDetail() {
     });
   }
   var isToday = selected === DATA.today;
+  var tomorrowDate = new Date(DATA.today + "T12:00:00");
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  var tomorrow = iso(tomorrowDate);
+  var isCoverDay = selected === DATA.today || selected === tomorrow;
   rows.sort(function(a,b){
-    var aMute = isToday && a.driver_assigned ? 1 : 0;
-    var bMute = isToday && b.driver_assigned ? 1 : 0;
+    var aMute = isCoverDay && a.driver_assigned ? 1 : 0;
+    var bMute = isCoverDay && b.driver_assigned ? 1 : 0;
     if (aMute !== bMute) return aMute - bMute;
     return (a.bol||"").localeCompare(b.bol||"");
   });
   document.getElementById("detailTitle").textContent = fmtLong(selected);
   document.getElementById("detailMeta").textContent = rows.length + " load" + (rows.length===1?"":"s") + " set for pickup";
   var html = rows.map(function(l){
-    var covered = isToday && l.driver_assigned;
+    var covered = isCoverDay && l.driver_assigned;
     var cls = "load" + (l.source==="tender"?" tender":"") + (covered?" covered":"");
     var tag = l.source==="nortek" ? "Scheduled" : (l.confirmed ? "Confirmed" : "Not confirmed");
     var prev = l.rescheduled && l.previous_pickup ? " <span class='tag moved'>was " + esc(fmtLong(l.previous_pickup)) + "</span>" : "";
