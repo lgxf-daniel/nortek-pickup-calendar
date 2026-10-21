@@ -45,9 +45,7 @@
   .load.tender { border-left-color:#c47b12; }
   .load .top { display:flex; justify-content:space-between; gap:8px; font-size:13px; }
   .bol { font-weight:700; }
-  .load.covered { background:#f4f6f8; border-left-color:#c5ced6; }
-  .load.covered .bol, .load.covered .dest, .load.covered .appt, .load.covered .tag { color:#8a97a6; }
-  .load.covered .tag { background:#eef1f4; }
+
   .tag { font-size:11px; border-radius:99px; padding:2px 8px; background:var(--teal-bg); color:var(--teal); white-space:nowrap; }
   .tag.warn { background:var(--amber-bg); color:#8a5a00; }
   .tag.moved { background:#f3e8f7; color:var(--purple); }
@@ -59,6 +57,17 @@
   .filters button, .search { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; }
   .filters button.on { background:var(--navy); color:#fff; border-color:var(--navy); }
   .search { min-width:220px; }
+
+  .load.covered { background:#eef1f4; border-left-color:#c5ced6; opacity:0.55; }
+  .load.covered .bol,
+  .load.covered .dest,
+  .load.covered .appt,
+  .load.covered .appt.confirmed,
+  .load.covered .appt.unconfirmed,
+  .load.covered .tag,
+  .load.covered .tag.moved { color:#8a97a6; font-weight:500; }
+  .load.covered .tag,
+  .load.covered .tag.moved { background:#eef1f4; }
 </style>
 </head>
 <body>
